@@ -13,7 +13,7 @@ if "GEMINI_API_KEY" in st.secrets:
     except: model = None
 else: model = None
 
-# 3. الهوية البصرية (ANDANDI)
+# 3. الهوية البصرية الاحترافية (ANDANDI)
 st.markdown("""
     <style>
     .main-box {
@@ -24,11 +24,14 @@ st.markdown("""
     }
     .brand-eng { color: #f39c12; font-size: 4em; font-family: 'Arial Black'; margin: 0; }
     .brand-arb { color: #f39c12; font-size: 1.5em; margin: 0; font-weight: bold; }
+    .footer-box {
+        text-align: center; padding: 30px; border-top: 1px solid #444; margin-top: 50px;
+    }
     </style>
     <div class="main-box">
         <h1 class="brand-eng">ANDANDI</h1>
         <p class="brand-arb">أنداندي للأنظمة الذكية</p>
-        <p style="color: white; opacity: 0.9;">إشراف م. محمد عبد الهادي عيسى</p>
+        <p style="color: white; opacity: 0.9;">بإشراف م. محمد عبد الهادي عيسى</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -41,7 +44,7 @@ system_type = st.selectbox(
 
 st.write("---")
 
-# ==================== 🏠 القسم السكني (شامل البطاريات والاكسسوارات) ====================
+# ==================== 🏠 القسم السكني (شامل كل شيء) ====================
 if "🏠" in system_type:
     st.subheader("📋 تحديد أحمال المنزل")
     
@@ -64,87 +67,69 @@ if "🏠" in system_type:
     total_load = sum(selected_items.values())
     
     if total_load > 0:
-        st.markdown(f"### 📊 نتائج التصميم الفني")
+        st.markdown(f"### 📊 النتائج الفنية للمنظومة")
         
-        # مدخلات إضافية للحساب
         c1, c2 = st.columns(2)
         v_sys = c1.selectbox("جهد النظام (V):", [12, 24, 48], index=2)
-        night_hours = c2.slider("ساعات التشغيل الليلي (على البطارية):", 1, 15, 6)
+        night_hours = c2.slider("ساعات التشغيل الليلي المطلوب:", 1, 15, 6)
         
-        # 1. حساب الإنفيرتر والألواح
+        # الحسابات الهندسية
         inv_kw = math.ceil((total_load * 1.25) / 1000)
         pan_count = math.ceil((total_load * 2.2) / 550)
         
-        # 2. حساب البطاريات (بافتراض بطاريات 200Ah)
-        # المعادلة: (الحمل * الساعات) / (الجهد * 0.6 كفاءة) / 200Ah
-        required_ah = (total_load * night_hours) / (v_sys * 0.6)
-        bat_count = math.ceil(required_ah / 200)
-        # التأكد من أن عدد البطاريات يناسب الجهد (مثلاً نظام 48V يحتاج مضاعفات 4)
+        # حساب البطاريات (200Ah)
+        req_ah = (total_load * night_hours) / (v_sys * 0.6)
+        bat_count = math.ceil(req_ah / 200)
         if v_sys == 48: bat_count = math.ceil(bat_count / 4) * 4
         elif v_sys == 24: bat_count = math.ceil(bat_count / 2) * 2
 
-        # عرض النتائج الأساسية
-        res1, res2, res3 = st.columns(3)
-        res1.metric("قدرة الإنفيرتر", f"{inv_kw} kW")
-        res2.metric("عدد الألواح (550W)", f"{pan_count} لوح")
-        res3.metric("عدد البطاريات (200Ah)", f"{bat_count} بطارية")
+        # العرض الرئيسي
+        r1, r2, r3 = st.columns(3)
+        r1.metric("الإنفيرتر", f"{inv_kw} kW")
+        r2.metric("الألواح (550W)", f"{pan_count} لوح")
+        r3.metric("البطاريات (200Ah)", f"{bat_count} بطارية")
 
         # --- قسم الاكسسوارات والملحقات ---
         st.markdown("### 🛒 الملحقات والاكسسوارات الفنية")
-        st.info("هذه الملحقات ضرورية لضمان سلامة المنظومة وكفاءتها:")
+        amps = (total_load / v_sys) * 1.25
+        wire = "10mm" if amps < 60 else "16mm"
         
-        # حسابات الأسلاك والبريكرات
-        system_amps = (total_load / v_sys) * 1.25
-        if system_amps <= 30: wire = "6mm"
-        elif system_amps <= 60: wire = "10mm"
-        else: wire = "16mm أو 25mm"
-        
-        acc_col1, acc_col2 = st.columns(2)
-        with acc_col1:
-            st.write("**🔌 الأسلاك والكوابل:**")
-            st.write(f"- كوابل البطاريات: {wire} نحاس مخصص")
-            st.write(f"- كوابل الألواح: 6mm DC (حسب المسافة)")
-            st.write(f"- كوابل الأحمال: 4mm AC")
-        with acc_col2:
-            st.write("**🛡️ الحماية والتركيب:**")
-            st.write(f"- قاطع بطاريات (DC Breaker): {math.ceil(system_amps/10)*10}A")
-            st.write(f"- قاطع أحمال (AC Breaker): 32A")
-            st.write(f"- الهياكل: قواعد تثبيت ألمنيوم لـ {pan_count} لوح")
+        acc1, acc2 = st.columns(2)
+        with acc1:
+            st.write("**🔌 الكوابل:**")
+            st.info(f"- كابل بطاريات: {wire} نحاس")
+            st.info(f"- كابل ألواح: 6mm DC")
+        with acc2:
+            st.write("**🛡️ الحماية:**")
+            st.info(f"- قاطع بطارية: {math.ceil(amps/10)*10}A DC")
+            st.info(f"- قاطع خروج: 32A AC")
 
 # ==================== 🌾 القسم الزراعي ====================
 elif "🌾" in system_type:
-    st.subheader("🚜 تصميم أنظمة الري الزراعي")
-    c1, c2 = st.columns(2)
-    acres = c1.number_input("المساحة (فدان):", 1, 1000, 5)
-    depth = c2.number_input("العمق (متر):", 10, 500, 60)
-    
+    st.subheader("🚜 تصميم أنظمة الري")
+    acres = st.number_input("المساحة (فدان):", 1, 1000, 5)
+    depth = st.number_input("العمق (متر):", 10, 500, 60)
     hp = math.ceil((acres * 1.1) + (depth * 0.06))
-    panels = math.ceil((hp * 746 * 1.6) / 550)
-    
-    st.success(f"✅ طلمبة {hp} حصان | {panels} لوح")
-    st.markdown("#### 📦 الملحقات الزراعية:")
-    st.info(f"- جهاز VFD بقدرة {hp} حصان")
-    st.info(f"- كابل بحري 3x10mm بطول {depth+20} متر")
-    st.info("- نظام حماية وتأريض صواعق")
+    st.success(f"المطلوب: طلمبة {hp} حصان")
+    st.info(f"الملحقات: جهاز VFD {hp}HP + كابل بحري + هياكل تثبيت.")
 
 # ==================== 🏭 القسم الصناعي ====================
 elif "🏭" in system_type:
     st.subheader("⚙️ المنظومات الصناعية")
-    ind_load = st.number_input("الحمل بالكيلوواط:", 1.0, 2000.0, 10.0)
-    st.error(f"تحتاج إنفيرتر صناعي 3-Phase بقدرة {math.ceil(ind_load * 2)} كيلوواط")
-    st.info("الملحقات: لوحة تحويل ATS + كوابل XLPE مقاس كبير.")
+    ind_w = st.number_input("الحمل (kW):", 1.0, 2000.0, 10.0)
+    st.error(f"تحتاج إنفيرتر 3-Phase بقدرة {math.ceil(ind_w * 2)} كيلوواط")
 
-# --- التذييل والواتساب ---
-st.write("---")
-wa_url = f"https://wa.me/249116284817?text=استشارة هندسية لمنظومة {system_type}"
+# --- التذييل الثابت (حقوق الملكية) ---
 st.markdown(f"""
-    <div style="text-align: center; padding: 25px;">
-        <a href="{wa_url}" target="_blank">
-            <button style="background-color: #25d366; color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; cursor: pointer; font-size: 1.2em;">
-                💬 اطلب عرض السعر من م. محمد
+    <div class="footer-box">
+        <a href="https://wa.me/249116284817" target="_blank" style="text-decoration: none;">
+            <button style="background-color: #25d366; color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 1.1em;">
+                💬 تواصل مباشر مع م. محمد عبد الهادي
             </button>
         </a>
-        <p style="color: #7f8c8d; margin-top: 20px;">تصميم: م. محمد عبد الهادي عيسى | <b>ANDANDI 2026</b></p>
+        <br><br>
+        <p style="color: #f39c12; font-weight: bold; font-size: 1.2em; margin-bottom: 5px;">ANDANDI © 2026</p>
+        <p style="color: #888; margin-top: 0;">جميع الحقوق محفوظة | تصميم وإشراف: م. محمد عبد الهادي عيسى</p>
+        <p style="color: #555; font-size: 0.8em;">هندسة القوى الكهربائية - السودان</p>
     </div>
-""", unsafe_allow_html=True)
-        
+    """, unsafe_allow_html=True)
