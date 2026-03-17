@@ -8,7 +8,8 @@ st.set_page_config(page_title="مستشارك الشمسي - م. محمد عبد
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('models/gemini-1.5-flash')
+
 else:
     st.error("يرجى إضافة GEMINI_API_KEY في إعدادات Secrets")
 
