@@ -1,12 +1,11 @@
 import streamlit as st
 import google.generativeai as genai
 import math
-import pandas as pd
 
 # 1. إعدادات الصفحة
 st.set_page_config(page_title="أنداندي للطاقة الشمسية", page_icon="☀️", layout="wide")
 
-# 2. الربط مع جيمني (للدعم الفني)
+# 2. الربط مع جيمني
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     try:
@@ -19,55 +18,37 @@ st.markdown("""
     <style>
     .main-box {
         background: linear-gradient(135deg, #000000 0%, #2c3e50 100%);
-        padding: 35px;
-        border-radius: 20px;
-        text-align: center;
-        border-bottom: 5px solid #f39c12;
-        margin-bottom: 25px;
+        padding: 35px; border-radius: 20px; text-align: center;
+        border-bottom: 5px solid #f39c12; margin-bottom: 25px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
-    .brand-eng { color: #f39c12; font-size: 4em; font-family: 'Arial Black'; margin: 0; line-height: 1; }
+    .brand-eng { color: #f39c12; font-size: 4em; font-family: 'Arial Black'; margin: 0; }
     .brand-arb { color: #f39c12; font-size: 1.5em; margin: 0; font-weight: bold; }
     </style>
     <div class="main-box">
         <h1 class="brand-eng">ANDANDI</h1>
         <p class="brand-arb">أنداندي للأنظمة الذكية</p>
-        <p style="color: white; opacity: 0.9;">بإشراف م. محمد عبد الهادي عيسى</p>
+        <p style="color: white; opacity: 0.9;">إشراف م. محمد عبد الهادي عيسى</p>
     </div>
     """, unsafe_allow_html=True)
 
-# 4. اختيار نوع النظام داخل مربع أنيق
-st.markdown("### 🛠️ مركز التحكم والتصميم")
-with st.container():
-    st.info("اختر نوع المنظومة من القائمة أدناه لبدء الحسابات الهندسية")
-    system_type = st.selectbox(
-        "ما هو نوع المنظومة التي تريد تصميمها؟",
-        ["🏠 المنظومات المنزلية والسكينة", "🌾 منظومات الري الزراعي (الطلمبات)", "🏭 المنظومات الصناعية (الورش والمصانع)"]
-    )
+# 4. اختيار نوع النظام
+st.markdown("### 🛠️ مركز التحكم والتصميم الهندسي")
+system_type = st.selectbox(
+    "ما هو نوع المنظومة التي تريد تصميمها؟",
+    ["🏠 المنظومات المنزلية والسكينة", "🌾 منظومات الري الزراعي (الطلمبات)", "🏭 المنظومات الصناعية (الورش والمصانع)"]
+)
 
 st.write("---")
 
-# ==================== 🏠 القسم السكني ====================
+# ==================== 🏠 القسم السكني المطور ====================
 if "🏠" in system_type:
-    st.subheader("📋 تحديد أحمال المنزل (خيارات شاملة)")
+    st.subheader("📋 تحديد أحمال المنزل والاكسسوارات")
     
     appliance_cats = {
-        "❄️ التبريد والتكييف": {
-            "مكيف فريون 1.5 حصان": 1500, "مكيف نسمة / ماء": 250, "ثلاجة كبيرة": 300, 
-            "ديب فريزر": 250, "مبرد مادة (كولر)": 150
-        },
-        "🏠 الأجهزة العامة والإضاءة": {
-            "مروحة سقف": 80, "شاشة LED": 120, "إضاءة البيت كاملة": 200, 
-            "راوتر إنترنت": 30, "ريسيفر": 50, "لابتوب": 100
-        },
-        "🍳 أجهزة المطبخ والكي": {
-            "غلاية ماء (كاتل)": 2000, "ميكروويف": 1200, "خلاط": 400, 
-            "مكواة ملابس": 1500, "سخان كهربائي": 1500, "فرن كهربائي": 2500
-        },
-        "💦 مضخات وغسالات": {
-            "مضخة ماء منزلية": 750, "غسالة ملابس عادية": 500, "غسالة أوتوماتيك": 2000, 
-            "مكنسة كهربائية": 1400
-        }
+        "❄️ التبريد": {"مكيف فريون 1.5 حصان": 1500, "مكيف نسمة": 250, "ثلاجة": 300, "ديب فريزر": 250},
+        "🏠 الأجهزة": {"مروحة": 80, "شاشة": 120, "إضاءة": 200, "إنترنت": 30},
+        "🍳 المطبخ": {"غلاية": 2000, "ميكروويف": 1200, "مكواة": 1500}
     }
     
     selected_items = {}
@@ -81,70 +62,85 @@ if "🏠" in system_type:
                         selected_items[name] = watt * count
 
     total_load = sum(selected_items.values())
+    
     if total_load > 0:
-        st.markdown(f"### 📊 إجمالي الحمل المطلوب: {total_load} واط")
-        res_col1, res_col2 = st.columns(2)
-        with res_col1:
-            v_sys = st.selectbox("جهد النظام (V):", [24, 48], index=1)
-            night_h = st.slider("ساعات التشغيل ليلاً:", 1, 15, 6)
+        st.markdown(f"### 📊 ملخص الأحمال: {total_load} واط")
         
-        inv = math.ceil((total_load * 1.3) / 1000)
-        pan = math.ceil((total_load * 2.1) / 550)
+        # حسابات المنظومة الأساسية
+        v_sys = st.selectbox("جهد النظام (V):", [12, 24, 48], index=2)
+        inv_kw = math.ceil((total_load * 1.25) / 1000)
+        pan_count = math.ceil((total_load * 2.2) / 550)
         
-        with res_col2:
-            st.success(f"⚡ إنفيرتر: {inv} كيلوواط")
-            st.success(f"☀️ ألواح: {pan} لوح (550W)")
+        # --- قسم الاكسسوارات الذكي ---
+        st.markdown("### 🛒 الملحقات والاكسسوارات الفنية (تلقائي)")
+        with st.container():
+            st.markdown("<div style='background-color: #1e1e1e; padding: 20px; border-radius: 10px; border: 1px solid #f39c12;'>", unsafe_allow_html=True)
+            
+            # حساب التيار (Amps) لتحديد الأسلاك والبريكرات
+            system_amps = (total_load / v_sys) * 1.25
+            
+            # تحديد مقاس السلك
+            if system_amps <= 30: wire_size = 6
+            elif system_amps <= 50: wire_size = 10
+            elif system_amps <= 80: wire_size = 16
+            else: wire_size = 25
+            
+            # تحديد البريكرات
+            breaker_ac = math.ceil((total_load / 220) * 1.5 / 10) * 10
+            breaker_dc = math.ceil(system_amps / 10) * 10
 
-# ==================== 🌾 القسم الزراعي ====================
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.write("**🔌 الكوابل والأسلاك:**")
+                st.info(f"أسلاك البطاريات: {wire_size}mm مخصص")
+                st.info(f"أسلاك الألواح: 6mm DC")
+            with c2:
+                st.write("**🛡️ قواطع الحماية:**")
+                st.info(f"قاطع DC (البطاريات): {breaker_dc}A")
+                st.info(f"قاطع AC (الخروج): {breaker_ac}A")
+            with c3:
+                st.write("**🏗️ الهيكل والملحقات:**")
+                st.info(f"قواعد تثبيت: لعدد {pan_count} لوح")
+                st.info(f"تابلوه توزيع حماية متكامل")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# ==================== 🌾 القسم الزراعي المطور ====================
 elif "🌾" in system_type:
-    st.subheader("🚜 تصميم أنظمة الري والطلمبات")
-    with st.container():
-        c1, c2 = st.columns(2)
-        with c1:
-            acres = st.number_input("مساحة المزرعة (بالفدان):", 1, 1000, 5)
-            depth = st.number_input("عمق البئر الإجمالي (متر):", 10, 500, 60)
-        with c2:
-            st.info("💡 حسابات بناءً على متوسط احتياج المحصول والعمق")
-            # معادلة تقريبية للحصان
-            hp_base = (acres * 1.1) + (depth * 0.06)
-            hp = math.ceil(hp_base)
-            st.metric("قدرة الطلمبة المطلوبة", f"{hp} حصان")
-            
-            vfd = hp # جهاز الـ VFD غالباً يكون بنفس قدرة الحصان
-            panels = math.ceil((hp * 746 * 1.6) / 550)
-            
-            st.write(f"📦 **المعدات المقترحة:**")
-            st.write(f"- جهاز VFD بقدرة: {vfd} HP")
-            st.write(f"- عدد الألواح: {panels} لوح (550W)")
+    st.subheader("🚜 تفاصيل منظومة الري الزراعي")
+    acres = st.number_input("المساحة (فدان):", 1, 1000, 5)
+    depth = st.number_input("العمق (متر):", 10, 500, 60)
+    
+    hp = math.ceil((acres * 1.1) + (depth * 0.06))
+    panels = math.ceil((hp * 746 * 1.6) / 550)
+    
+    st.success(f"✅ التصميم: طلمبة {hp} حصان | {panels} لوح")
+    
+    st.markdown("#### 📦 تفاصيل الملحقات الزراعية:")
+    col_z1, col_z2 = st.columns(2)
+    with col_z1:
+        st.info(f"- جهاز VFD بقدرة {hp} حصان (ماركة INVT أو ما يعادلها)")
+        st.info(f"- كابل بحري (Submersible Cable) مقاس 3x10mm بطول {depth + 20} متر")
+    with col_z2:
+        st.info("- هيكل تثبيت حديد مجلفن مضاد للصدأ")
+        st.info("- حساسات مستوى الماء (Sensors) ومفتاح تشغيل طوارئ")
 
-# ==================== 🏭 القسم الصناعي ====================
+# ==================== 🏭 القسم الصناعي المطور ====================
 elif "🏭" in system_type:
-    st.subheader("⚙️ تصميم أحمال المصانع والورش")
-    with st.container():
-        ind_load = st.number_input("إجمالي حمل الماكينات بالكيلوواط (kW):", 1.0, 2000.0, 10.0)
-        motor_type = st.radio("نوع تشغيل المحركات:", ["نعومة (VFD/Soft Starter)", "تشغيل مباشر (Direct Online)"])
-        
-        factor = 1.5 if "نعومة" in motor_type else 3.5
-        needed_inv = math.ceil(ind_load * factor)
-        
-        st.error(f"⚠️ القدرة المطلوبة للإنفيرتر: {needed_inv} كيلوواط")
-        st.info("يجب استخدام كوابل نحاسية بمقاسات لا تقل عن 16mm لهذا الحمل.")
+    st.subheader("⚙️ منظومة الورش والمصانع")
+    ind_w = st.number_input("الحمل الصناعي (kW):", 1.0, 1000.0, 10.0)
+    st.error(f"تحتاج إنفيرتر صناعي 3-Phase بقدرة {math.ceil(ind_w * 2)} كيلوواط")
+    st.info("الملحقات: كوابل نحاس 25mm + لوحة ATS للتحويل الآلي + نظام تأريض (Earthing).")
 
 # --- التذييل والواتساب ---
-st.write("\n")
 st.write("---")
-st.markdown("### 🏢 من أعمال م. محمد عبد الهادي (أنداندي)")
-st.image("https://images.unsplash.com/photo-1509391366360-fe5bb626582f?w=800", caption="تنفيذ مشاريع أنداندي الذكية")
-
-wa_url = f"https://wa.me/249116284817?text=طلب استشارة هندسية من م. محمد"
+wa_url = f"https://wa.me/249116284817?text=طلب عرض سعر لمنظومة {system_type}"
 st.markdown(f"""
     <div style="text-align: center; padding: 25px;">
         <a href="{wa_url}" target="_blank">
-            <button style="background-color: #25d366; color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; cursor: pointer; font-size: 1.2em; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-                💬 تواصل مباشر مع م. محمد (واتساب)
+            <button style="background-color: #25d366; color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; cursor: pointer; font-size: 1.2em;">
+                💬 اطلب عرض السعر النهائي من م. محمد
             </button>
         </a>
-        <p style="color: #7f8c8d; margin-top: 25px;">تطوير وإشراف: م. محمد عبد الهادي عيسى | جميع الحقوق محفوظة لـ <b>ANDANDI</b> © 2026</p>
+        <p style="color: #7f8c8d; margin-top: 20px;">تصميم وبرمجة: م. محمد عبد الهادي عيسى | <b>ANDANDI 2026</b></p>
     </div>
 """, unsafe_allow_html=True)
-            
