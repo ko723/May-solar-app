@@ -10,105 +10,118 @@ st.set_page_config(page_title="أنداندي للطاقة الشمسية", page
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     try:
-        available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        model_name = next((m for m in available_models if 'flash' in m), available_models[0])
-        model = genai.GenerativeModel(model_name)
+        model = genai.GenerativeModel('gemini-1.5-flash')
     except: model = None
 
-# --- تصميم الهوية البصرية ---
+# --- تصميم الهوية البصرية الفخم ---
 st.markdown("""
-    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); padding: 30px; border-radius: 15px; border-top: 5px solid #f39c12; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
-        <h1 style="color: #f39c12; margin: 0; font-size: 3.5em; font-family: 'Trebuchet MS'; letter-spacing: 3px; line-height: 1;">ANDANDI</h1>
-        <p style="color: #f39c12; font-size: 1.2em; margin: 0; font-family: 'Arial'; font-weight: bold;">أنداندي</p>
-        <p style="color: #ecf0f1; font-size: 1.1em; margin-top: 10px; opacity: 0.8;">حلول الطاقة الشمسية (منزلي - زراعي - صناعي)</p>
+    <style>
+    .main-header {
+        background: linear-gradient(135deg, #000000 0%, #2c3e50 100%);
+        padding: 40px;
+        border-radius: 20px;
+        border-right: 10px solid #f39c12;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    }
+    .brand-eng { color: #f39c12; font-size: 4em; font-family: 'Arial Black'; margin: 0; line-height: 1; }
+    .brand-arb { color: #f39c12; font-size: 1.5em; margin: 0; font-weight: bold; }
+    </style>
+    <div class="main-header">
+        <h1 class="brand-eng">ANDANDI</h1>
+        <p class="brand-arb">أنداندي للأنظمة الذكية</p>
+        <p style="color: white; opacity: 0.8; margin-top: 15px;">المنصة الهندسية المتكاملة | بإشراف م. محمد عبد الهادي عيسى</p>
     </div>
     """, unsafe_allow_html=True)
 
-# --- اختيار نوع المنظومة ---
 st.write("\n")
-st.markdown("### 📋 اختر نوع النظام المطلوب")
-system_type = st.radio("نوع المنظومة:", ["🏠 منزلي / سكني", "🌾 زراعي (طلمبات)", "🏭 صناعي / ورش"], horizontal=True)
 
-st.write("---")
+# --- الأقسام الرئيسية المطورة ---
+tabs = st.tabs(["⚡ حاسبة الأحمال", "🚜 مزارع أنداندي", "⚙️ المختبر الهندسي", "🛡️ الضمان والصيانة"])
 
-# ==================== القسم السكني ====================
-if system_type == "🏠 منزلي / سكني":
-    appliance_cats = {
-        "❄️ التبريد": {"مكيف فريون": 1200, "مكيف نسمة": 250, "ثلاجة": 300, "ديب فريزر": 200},
-        "🍳 المطبخ": {"غلاية ماء": 2000, "ميكروويف": 1200, "سخان كهربائي": 1500},
-        "🏠 المنزل": {"شاشة LED": 120, "مروحة سقف": 80, "مكواة": 1500, "إنترنت": 30}
-    }
-    selected_items = {}
-    tabs = st.tabs(list(appliance_cats.keys()))
-    for i, cat in enumerate(appliance_cats.keys()):
-        with tabs[i]:
-            cols = st.columns(2)
-            for j, (name, watt) in enumerate(appliance_cats[cat].items()):
-                if cols[j % 2].checkbox(f"{name} ({watt}W)", key=f"c_{name}"):
-                    count = cols[j % 2].number_input(f"العدد", 1, 20, 1, key=f"v_{name}")
-                    selected_items[name] = watt * count
-    
-    total_load = sum(selected_items.values())
-    if total_load > 0:
+# 1. حاسبة الأحمال (المنزلي والصناعي)
+with tabs[0]:
+    st.subheader("🏠 تصميم المنظومة السكنية والصناعية")
+    col_l, col_r = st.columns([2, 1])
+    with col_l:
+        st.markdown("##### اختر أجهزتك:")
         c1, c2 = st.columns(2)
-        night_h = c1.slider("🌙 تشغيل ليلي (ساعة):", 1, 15, 6)
-        v_sys = c2.radio("⚡ جهد النظام:", [12, 24, 48], index=2, horizontal=True)
+        ac = c1.number_input("مكيفات فريون (1.5 HP):", 0, 20, 0)
+        fridge = c2.number_input("ثلاجات / ديب فريزر:", 0, 10, 1)
+        fans = c1.number_input("مراوح سقف:", 0, 50, 4)
+        lights = c2.number_input("لمبات إضاءة:", 0, 100, 10)
         
-        inv = math.ceil((total_load * 1.25) / 500) * 500
-        bat = math.ceil((total_load * night_h) / (v_sys * 0.5 * 0.85))
-        pan = math.ceil(((total_load * 8) + (total_load * night_h)) / (550 * 5 * 0.65))
-        
-        st.success(f"✅ **النتائج:** إنفيرتر {inv}W | بطاريات {bat}Ah | ألواح {pan} (550W)")
+        total_w = (ac * 1500) + (fridge * 300) + (fans * 80) + (lights * 15)
+    
+    with col_r:
+        st.markdown("##### ملخص النظام:")
+        st.metric("إجمالي الحمل الحالي", f"{total_w} W")
+        v_sys = st.selectbox("جهد النظام الموصى به:", [24, 48], index=1)
+        inv_size = math.ceil((total_w * 1.3) / 1000)
+        st.info(f"تحتاج إنفيرتر بقدرة {inv_size} كيلوواط.")
 
-# ==================== القسم الزراعي ====================
-elif system_type == "🌾 زراعي (طلمبات)":
-    st.markdown("#### 🚜 تصميم منظومة الري الشمسي")
+# 2. مزارع أنداندي (الري الزراعي المتطور)
+with tabs[1]:
+    st.subheader("🚜 تصميم ري المزارع")
+    st.info("حسابات دقيقة للطلمبات الغاطسة والسطحية.")
     col1, col2 = st.columns(2)
     with col1:
-        acres = st.number_input("📏 عدد الفدادين (Acre):", min_value=1, value=5)
-        crop_type = st.selectbox("🌱 نوع المحصول (لاحتياج المياه):", ["برسيم / أعلاف", "نخيل / أشجار", "خضروات", "محاصيل حقلية"])
+        hp = st.number_input("قدرة الطلمبة الحالية (أو المطلوبة) بالحصان:", 1, 200, 10)
+        pump_hours = st.slider("ساعات التشغيل اليومية:", 1, 10, 6)
     
-    # حساب تقريبي: الفدان يحتاج حوالي 1 إلى 1.5 حصان حسب المحصول والعمق
-    hp_needed = math.ceil(acres * 1.2)
-    vfd_size = math.ceil(hp_needed * 0.75 * 1.5) # تحويل للحصان ثم كيلوواط مع معامل أمان
-    panels_count = math.ceil((hp_needed * 746 * 1.6) / 550) # 1.6 معامل تعويض الفقد النهاري
-
     with col2:
-        st.info(f"💡 **التحليل:** لري مساحة {acres} فدان محصول ({crop_type})")
-        st.metric("قدرة الطلمبة المطلوبة", f"{hp_needed} حصان")
-        st.metric("جهاز التشغيل (VFD)", f"{hp_needed} HP / 3-Phase")
-        st.metric("عدد الألواح (550W)", f"{panels_count} لوح")
+        # حساب إنتاجية المياه التقريبية (قاعدة عامة: 1 حصان يعطي ~10 متر مكعب في الساعة عند عمق متوسط)
+        water_flow = hp * 8 * pump_hours 
+        st.metric("إنتاجية المياه المتوقعة", f"{water_flow} متر مكعب / يوم")
+        
+        # توفير الديزل (الجالون ينتج حوالي 10-12 كيلوواط ساعة)
+        diesel_saved = (hp * 0.746 * pump_hours) / 3
+        st.success(f"توفير الجازولين المتوقع: **{diesel_saved:.1f} جالون / يومياً**")
+
+# 3. المختبر الهندسي (حاسبة الكوابل)
+with tabs[2]:
+    st.subheader("📐 مختبر أنداندي (حساب الفقد)")
+    st.write("احسب قطر السلك المناسب لمنع "سخونة الأسلاك" وفقد الطاقة:")
     
-    st.warning("⚠️ ملاحظة: الحسابات مبنية على عمق بئر متوسط (40-60 متر). للأعماق الكبيرة يرجى مراجعة م. محمد.")
-
-# ==================== القسم الصناعي ====================
-elif system_type == "🏭 صناعي / ورش":
-    st.markdown("#### ⚙️ تصميم أحمال الورش والمصانع")
-    heavy_load = st.number_input("🔌 إجمالي أحمال الماكينات (واط):", min_value=500, value=5000, step=500)
-    motor_start = st.checkbox("🔄 هل توجد محركات تبدأ مباشرة (Direct on Line)؟")
+    col_c1, col_c2 = st.columns(2)
+    current = col_c1.number_input("التيار (Amps):", 1, 400, 30)
+    distance = col_c2.number_input("طول السلك (متر):", 1, 200, 20)
     
-    multiplier = 3.0 if motor_start else 1.5
-    industrial_inv = math.ceil((heavy_load * multiplier) / 1000)
-    industrial_panels = math.ceil((heavy_load * 1.8) / 550)
+    # حساب مساحة المقطع النحاسي (Voltage Drop < 3%)
+    wire_area = (distance * current * 0.04) / 1.5 
+    st.warning(f"📍 قطر السلك النحاسي المقترح: **{max(6, math.ceil(wire_area))} mm²**")
 
-    res1, res2 = st.columns(2)
-    res1.metric("قدرة الإنفيرتر الصناعي", f"{industrial_inv} kW")
-    res2.metric("عدد الألواح المطلوبة", f"{industrial_panels} لوح")
-    st.write("---")
-    st.info("للأنظمة الصناعية يفضل استخدام إنفيرترات Three-Phase لضمان استقرار الجهد.")
+# 4. الضمان والصيانة (جيمني الذكي)
+with tabs[3]:
+    st.subheader("🛡️ مركز الدعم الفني الذكي")
+    st.write("اسأل م. محمد (عبر جيمني) عن أي عطل أو استشارة فنية:")
+    user_query = st.text_input("مثال: لماذا ترتفع حرارة الإنفيرتر عند تشغيل المكيف؟")
+    if st.button("تحليل الاستشارة 🤖"):
+        if model:
+            with st.spinner("جاري التواصل مع م. محمد..."):
+                res = model.generate_content(f"أنت خبير طاقة شمسية سوداني، أجب على هذا السؤال الفني: {user_query}")
+                st.info(res.text)
 
-# --- التذييل والواتساب ---
+# --- معرض الأعمال المحدث ---
+st.write("---")
+st.markdown("### 🏢 سجل إنجازات أنداندي")
+# يمكنك إضافة روابط صور حقيقية هنا
+st.image("https://images.unsplash.com/photo-1509391366360-fe5bb626582f?w=800", caption="مشروع ري زراعي متكامل - إشراف م. محمد")
+
+# --- التذييل الثابت والواتساب ---
 st.write("\n\n")
-wa_url = f"https://wa.me/249116284817?text=استشارة فنية من م. محمد ({system_type})"
+wa_url = f"https://wa.me/249116284817?text=استشارة فنية من منصة أنداندي"
 st.markdown(f"""
-    <style>
-    .wa-float {{ position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: white;
-        border-radius: 50px; text-align: center; padding: 12px 18px; box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
-        z-index: 1000; text-decoration: none; font-weight: bold; font-size: 14px; }}
-    </style>
-    <a href="{wa_url}" class="wa-float" target="_blank">💬 تواصل مع م. محمد</a>
-    <div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 0.9em; border-top: 1px solid #34495e;">
-        إشراف وتصميم: <b>م. محمد عبد الهادي عيسى</b> <br>
-        © 2026 جميع الحقوق محفوظة لـ <b>ANDANDI</b>
+    <div style="text-align: center; padding: 20px; border-top: 2px solid #f39c12; margin-top: 50px;">
+        <a href="{wa_url}" target="_blank" style="text-decoration: none;">
+            <button style="background-color: #25d366; color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 1.1em; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+                💬 تواصل مع م. محمد عبد الهادي عيسى
+            </button>
+        </a>
+        <p style="color: #7f8c8d; margin-top: 20px;">
+            <b>ANDANDI</b> - للطاقة المتكاملة والأنظمة الذكية <br>
+            جميع الحقوق محفوظة © 2026
+        </p>
     </div>
 """, unsafe_allow_html=True)
+    
