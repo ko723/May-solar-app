@@ -13,7 +13,7 @@ if "GEMINI_API_KEY" in st.secrets:
         model = genai.GenerativeModel('gemini-1.5-flash')
     except: model = None
 
-# --- تصميم الهوية البصرية الفخم ---
+# --- تصميم الهوية البصرية الفخم (ANDANDI) ---
 st.markdown("""
     <style>
     .main-header {
@@ -30,14 +30,14 @@ st.markdown("""
     <div class="main-header">
         <h1 class="brand-eng">ANDANDI</h1>
         <p class="brand-arb">أنداندي للأنظمة الذكية</p>
-        <p style="color: white; opacity: 0.8; margin-top: 15px;">المنصة الهندسية المتكاملة | بإشراف م. محمد عبد الهادي عيسى</p>
+        <p style="color: white; opacity: 0.8; margin-top: 15px;">المنصة الهندسية المتكاملة | م. محمد عبد الهادي عيسى</p>
     </div>
     """, unsafe_allow_html=True)
 
 st.write("\n")
 
-# --- الأقسام الرئيسية المطورة ---
-tabs = st.tabs(["⚡ حاسبة الأحمال", "🚜 مزارع أنداندي", "⚙️ المختبر الهندسي", "🛡️ الضمان والصيانة"])
+# --- الأقسام الرئيسية ---
+tabs = st.tabs(["⚡ حاسبة الأحمال", "🚜 مزارع أنداندي", "⚙️ المختبر الهندسي", "🛡️ الصيانة والضمان"])
 
 # 1. حاسبة الأحمال (المنزلي والصناعي)
 with tabs[0]:
@@ -66,22 +66,20 @@ with tabs[1]:
     st.info("حسابات دقيقة للطلمبات الغاطسة والسطحية.")
     col1, col2 = st.columns(2)
     with col1:
-        hp = st.number_input("قدرة الطلمبة الحالية (أو المطلوبة) بالحصان:", 1, 200, 10)
+        acres = st.number_input("عدد الفدادين المطلوب ريها:", 1, 500, 5)
+        hp = math.ceil(acres * 1.2) # معادلة تقديرية للحصان لكل فدان
         pump_hours = st.slider("ساعات التشغيل اليومية:", 1, 10, 6)
     
     with col2:
-        # حساب إنتاجية المياه التقريبية (قاعدة عامة: 1 حصان يعطي ~10 متر مكعب في الساعة عند عمق متوسط)
         water_flow = hp * 8 * pump_hours 
         st.metric("إنتاجية المياه المتوقعة", f"{water_flow} متر مكعب / يوم")
-        
-        # توفير الديزل (الجالون ينتج حوالي 10-12 كيلوواط ساعة)
         diesel_saved = (hp * 0.746 * pump_hours) / 3
         st.success(f"توفير الجازولين المتوقع: **{diesel_saved:.1f} جالون / يومياً**")
 
-# 3. المختبر الهندسي (حاسبة الكوابل)
+# 3. المختبر الهندسي (حساب الكوابل - تم إصلاح الخطأ هنا)
 with tabs[2]:
     st.subheader("📐 مختبر أنداندي (حساب الفقد)")
-    st.write("احسب قطر السلك المناسب لمنع "سخونة الأسلاك" وفقد الطاقة:")
+    st.write("احسب قطر السلك المناسب لمنع 'سخونة الأسلاك' وفقد الطاقة:")
     
     col_c1, col_c2 = st.columns(2)
     current = col_c1.number_input("التيار (Amps):", 1, 400, 30)
@@ -91,37 +89,6 @@ with tabs[2]:
     wire_area = (distance * current * 0.04) / 1.5 
     st.warning(f"📍 قطر السلك النحاسي المقترح: **{max(6, math.ceil(wire_area))} mm²**")
 
-# 4. الضمان والصيانة (جيمني الذكي)
+# 4. الصيانة والضمان (جيمني الذكي)
 with tabs[3]:
-    st.subheader("🛡️ مركز الدعم الفني الذكي")
-    st.write("اسأل م. محمد (عبر جيمني) عن أي عطل أو استشارة فنية:")
-    user_query = st.text_input("مثال: لماذا ترتفع حرارة الإنفيرتر عند تشغيل المكيف؟")
-    if st.button("تحليل الاستشارة 🤖"):
-        if model:
-            with st.spinner("جاري التواصل مع م. محمد..."):
-                res = model.generate_content(f"أنت خبير طاقة شمسية سوداني، أجب على هذا السؤال الفني: {user_query}")
-                st.info(res.text)
-
-# --- معرض الأعمال المحدث ---
-st.write("---")
-st.markdown("### 🏢 سجل إنجازات أنداندي")
-# يمكنك إضافة روابط صور حقيقية هنا
-st.image("https://images.unsplash.com/photo-1509391366360-fe5bb626582f?w=800", caption="مشروع ري زراعي متكامل - إشراف م. محمد")
-
-# --- التذييل الثابت والواتساب ---
-st.write("\n\n")
-wa_url = f"https://wa.me/249116284817?text=استشارة فنية من منصة أنداندي"
-st.markdown(f"""
-    <div style="text-align: center; padding: 20px; border-top: 2px solid #f39c12; margin-top: 50px;">
-        <a href="{wa_url}" target="_blank" style="text-decoration: none;">
-            <button style="background-color: #25d366; color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 1.1em; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                💬 تواصل مع م. محمد عبد الهادي عيسى
-            </button>
-        </a>
-        <p style="color: #7f8c8d; margin-top: 20px;">
-            <b>ANDANDI</b> - للطاقة المتكاملة والأنظمة الذكية <br>
-            جميع الحقوق محفوظة © 2026
-        </p>
-    </div>
-""", unsafe_allow_html=True)
     
