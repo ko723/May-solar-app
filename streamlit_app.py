@@ -1,14 +1,15 @@
+
 import streamlit as st
 import google.generativeai as genai
 
 # إعدادات الصفحة
 st.set_page_config(page_title="مستشارك الشمسي - م. محمد عبد الهادي", page_icon="☀️", layout="centered")
 
-# الربط مع جيمني عبر الخزنة السرية
+# الربط مع الخزنة السرية
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=API_KEY)
-    # تحديث اسم الموديل لحل مشكلة 404
+    # هذا السطر هو مفتاح الحل:
     model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     st.error("يرجى إضافة GEMINI_API_KEY في إعدادات Secrets")
@@ -42,11 +43,13 @@ if total_load > 0:
     if st.button("توليد التقرير الهندسي الشامل"):
         with st.spinner('جاري التحليل...'):
             try:
-                prompt = f"أنا المهندس محمد عبد الهادي، صممت نظاماً لحمل {total_load} واط. قدم نصيحة فنية بلهجة سودانية مهنية حول الإنفيرتر والبطاريات المناسبة."
+                # طلب التقرير من جيمني
+                prompt = f"أنا المهندس محمد عبد الهادي، صممت نظاماً لحمل {total_load} واط. قدم نصيحة فنية بلهجة سودانية مهنية حول الإنفيرتر والبطاريات المناسبة ونظام الـ 48 فولت."
                 response = model.generate_content(prompt)
                 st.success("التقرير الفني:")
                 st.write(response.text)
             except Exception as e:
+                # إذا ظهر خطأ 404 مرة أخرى، جرب تبديل اسم الموديل إلى 'models/gemini-1.5-flash'
                 st.error(f"عذراً، حدث خطأ: {e}")
 
 st.write("---")
