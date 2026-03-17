@@ -10,7 +10,7 @@ if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=API_KEY)
     # هذا السطر هو مفتاح الحل:
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash-001')
 else:
     st.error("يرجى إضافة GEMINI_API_KEY في إعدادات Secrets")
     st.stop()
