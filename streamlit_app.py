@@ -5,7 +5,8 @@ import google.generativeai as genai
 st.set_page_config(page_title="مستشارك الشمسي - م. محمد عبد الهادي", page_icon="☀️", layout="centered")
 
 # الربط مع جيمني
-API_KEY = ""
+API_KEY = st.secrets["GEMINI_API_KEY"]
+
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
