@@ -7,6 +7,7 @@ st.set_page_config(page_title="مستشارك الشمسي - م. محمد عبد
 # الربط مع جيمني
 API_KEY = st.secrets["GEMINI_API_KEY"]
 
+
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
