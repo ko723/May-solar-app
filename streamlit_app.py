@@ -8,12 +8,13 @@ st.set_page_config(page_title="مستشارك الشمسي - م. محمد عبد
 if "GEMINI_API_KEY" in st.secrets:
     API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('models/gemini-1.5-flash')
-
+    # تحديث اسم الموديل لحل مشكلة 404
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     st.error("يرجى إضافة GEMINI_API_KEY في إعدادات Secrets")
+    st.stop()
 
-# واجهة المهندس محمد
+# واجهة المستخدم
 st.markdown("<h1 style='text-align: center; color: #f39c12;'>⚡ المصمم الشمسي الهندسي</h1>", unsafe_allow_html=True)
 st.markdown(f"<p style='text-align: center;'><b>تطوير المهندس: محمد عبد الهادي عيسى مختار</b></p>", unsafe_allow_html=True)
 
@@ -30,17 +31,23 @@ device_watts = {
 }
 
 devices = st.multiselect("اختر الأجهزة:", list(device_watts.keys()))
+
 total_load = 0
 for d in devices:
     total_load += device_watts[d]
 
 if total_load > 0:
     st.info(f"إجمالي الحمل: {total_load} واط")
-    if st.button("توليد التقرير الهندسي"):
-        try:
-            response = model.generate_content(f"أنا المهندس محمد عبد الهادي، صممت نظام لحمل {total_load} واط. أعطني نصيحة فنية سودانية.")
-            st.success("التقرير:")
-            st.write(response.text)
-        except Exception as e:
-            st.error(f"خطأ: {e}")
-            
+    
+    if st.button("توليد التقرير الهندسي الشامل"):
+        with st.spinner('جاري التحليل...'):
+            try:
+                prompt = f"أنا المهندس محمد عبد الهادي، صممت نظاماً لحمل {total_load} واط. قدم نصيحة فنية بلهجة سودانية مهنية حول الإنفيرتر والبطاريات المناسبة."
+                response = model.generate_content(prompt)
+                st.success("التقرير الفني:")
+                st.write(response.text)
+            except Exception as e:
+                st.error(f"عذراً، حدث خطأ: {e}")
+
+st.write("---")
+st.caption("تم التطوير بواسطة م. محمد عبد الهادي عيسى © 2026")
