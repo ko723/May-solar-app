@@ -107,4 +107,44 @@ if "🏠" in system_type:
             st.write(f"- كوابل الأحمال: 4mm AC")
         with acc_col2:
             st.write("**🛡️ الحماية والتركيب:**")
-            
+            st.write(f"- قاطع بطاريات (DC Breaker): {math.ceil(system_amps/10)*10}A")
+            st.write(f"- قاطع أحمال (AC Breaker): 32A")
+            st.write(f"- الهياكل: قواعد تثبيت ألمنيوم لـ {pan_count} لوح")
+
+# ==================== 🌾 القسم الزراعي ====================
+elif "🌾" in system_type:
+    st.subheader("🚜 تصميم أنظمة الري الزراعي")
+    c1, c2 = st.columns(2)
+    acres = c1.number_input("المساحة (فدان):", 1, 1000, 5)
+    depth = c2.number_input("العمق (متر):", 10, 500, 60)
+    
+    hp = math.ceil((acres * 1.1) + (depth * 0.06))
+    panels = math.ceil((hp * 746 * 1.6) / 550)
+    
+    st.success(f"✅ طلمبة {hp} حصان | {panels} لوح")
+    st.markdown("#### 📦 الملحقات الزراعية:")
+    st.info(f"- جهاز VFD بقدرة {hp} حصان")
+    st.info(f"- كابل بحري 3x10mm بطول {depth+20} متر")
+    st.info("- نظام حماية وتأريض صواعق")
+
+# ==================== 🏭 القسم الصناعي ====================
+elif "🏭" in system_type:
+    st.subheader("⚙️ المنظومات الصناعية")
+    ind_load = st.number_input("الحمل بالكيلوواط:", 1.0, 2000.0, 10.0)
+    st.error(f"تحتاج إنفيرتر صناعي 3-Phase بقدرة {math.ceil(ind_load * 2)} كيلوواط")
+    st.info("الملحقات: لوحة تحويل ATS + كوابل XLPE مقاس كبير.")
+
+# --- التذييل والواتساب ---
+st.write("---")
+wa_url = f"https://wa.me/249116284817?text=استشارة هندسية لمنظومة {system_type}"
+st.markdown(f"""
+    <div style="text-align: center; padding: 25px;">
+        <a href="{wa_url}" target="_blank">
+            <button style="background-color: #25d366; color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; cursor: pointer; font-size: 1.2em;">
+                💬 اطلب عرض السعر من م. محمد
+            </button>
+        </a>
+        <p style="color: #7f8c8d; margin-top: 20px;">تصميم: م. محمد عبد الهادي عيسى | <b>ANDANDI 2026</b></p>
+    </div>
+""", unsafe_allow_html=True)
+        
