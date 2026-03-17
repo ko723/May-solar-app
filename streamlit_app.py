@@ -3,17 +3,20 @@ import google.generativeai as genai
 import math
 import pandas as pd
 
-# إعدادات الصفحة
+# 1. إعدادات الصفحة
 st.set_page_config(page_title="أنداندي للطاقة الشمسية", page_icon="☀️", layout="wide")
 
-# الربط مع جيمني
+# 2. الربط مع جيمني
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
-    except: model = None
+    except:
+        model = None
+else:
+    model = None
 
-# --- تصميم الهوية البصرية الفخم (ANDANDI) ---
+# 3. تصميم الهوية البصرية (ANDANDI)
 st.markdown("""
     <style>
     .main-header {
@@ -24,71 +27,90 @@ st.markdown("""
         text-align: center;
         box-shadow: 0 15px 35px rgba(0,0,0,0.5);
     }
-    .brand-eng { color: #f39c12; font-size: 4em; font-family: 'Arial Black'; margin: 0; line-height: 1; }
+    .brand-eng { color: #f39c12; font-size: 3.5em; font-family: 'Arial Black'; margin: 0; line-height: 1; }
     .brand-arb { color: #f39c12; font-size: 1.5em; margin: 0; font-weight: bold; }
     </style>
     <div class="main-header">
         <h1 class="brand-eng">ANDANDI</h1>
         <p class="brand-arb">أنداندي للأنظمة الذكية</p>
-        <p style="color: white; opacity: 0.8; margin-top: 15px;">المنصة الهندسية المتكاملة | م. محمد عبد الهادي عيسى</p>
+        <p style="color: white; opacity: 0.8; margin-top: 15px;">بإشراف م. محمد عبد الهادي عيسى</p>
     </div>
     """, unsafe_allow_html=True)
 
 st.write("\n")
 
-# --- الأقسام الرئيسية ---
-tabs = st.tabs(["⚡ حاسبة الأحمال", "🚜 مزارع أنداندي", "⚙️ المختبر الهندسي", "🛡️ الصيانة والضمان"])
+# 4. الأقسام الرئيسية (Tabs)
+tabs = st.tabs(["🏠 أحمال المنزل", "🌾 ري المزارع", "⚙️ المختبر الهندسي", "🛡️ الصيانة والضمان"])
 
-# 1. حاسبة الأحمال (المنزلي والصناعي)
+# --- القسم الأول: منزلي ---
 with tabs[0]:
-    st.subheader("🏠 تصميم المنظومة السكنية والصناعية")
-    col_l, col_r = st.columns([2, 1])
-    with col_l:
-        st.markdown("##### اختر أجهزتك:")
-        c1, c2 = st.columns(2)
-        ac = c1.number_input("مكيفات فريون (1.5 HP):", 0, 20, 0)
-        fridge = c2.number_input("ثلاجات / ديب فريزر:", 0, 10, 1)
-        fans = c1.number_input("مراوح سقف:", 0, 50, 4)
-        lights = c2.number_input("لمبات إضاءة:", 0, 100, 10)
-        
-        total_w = (ac * 1500) + (fridge * 300) + (fans * 80) + (lights * 15)
+    st.subheader("💡 تصميم المنظومة السكنية")
+    c1, c2 = st.columns(2)
+    with c1:
+        ac = st.number_input("مكيفات فريون:", 0, 20, 0)
+        fans = st.number_input("مراوح سقف:", 0, 50, 4)
+    with c2:
+        fridge = st.number_input("ثلاجات:", 0, 10, 1)
+        lights = st.number_input("لمبات إضاءة:", 0, 100, 10)
     
-    with col_r:
-        st.markdown("##### ملخص النظام:")
-        st.metric("إجمالي الحمل الحالي", f"{total_w} W")
-        v_sys = st.selectbox("جهد النظام الموصى به:", [24, 48], index=1)
+    total_w = (ac * 1500) + (fridge * 300) + (fans * 80) + (lights * 15)
+    st.markdown(f"#### إجمالي الحمل: {total_w} واط")
+    
+    if total_w > 0:
         inv_size = math.ceil((total_w * 1.3) / 1000)
-        st.info(f"تحتاج إنفيرتر بقدرة {inv_size} كيلوواط.")
+        st.success(f"المقترح: إنفيرتر بقدرة {inv_size} كيلوواط")
 
-# 2. مزارع أنداندي (الري الزراعي المتطور)
+# --- القسم الثاني: زراعي ---
 with tabs[1]:
-    st.subheader("🚜 تصميم ري المزارع")
-    st.info("حسابات دقيقة للطلمبات الغاطسة والسطحية.")
+    st.subheader("🚜 تصميم ري مزارع أنداندي")
     col1, col2 = st.columns(2)
     with col1:
-        acres = st.number_input("عدد الفدادين المطلوب ريها:", 1, 500, 5)
-        hp = math.ceil(acres * 1.2) # معادلة تقديرية للحصان لكل فدان
-        pump_hours = st.slider("ساعات التشغيل اليومية:", 1, 10, 6)
-    
+        acres = st.number_input("عدد الفدادين:", 1, 500, 5)
+        pump_h = st.slider("ساعات التشغيل:", 1, 12, 6)
     with col2:
-        water_flow = hp * 8 * pump_hours 
-        st.metric("إنتاجية المياه المتوقعة", f"{water_flow} متر مكعب / يوم")
-        diesel_saved = (hp * 0.746 * pump_hours) / 3
-        st.success(f"توفير الجازولين المتوقع: **{diesel_saved:.1f} جالون / يومياً**")
+        hp = math.ceil(acres * 1.2)
+        water = hp * 8 * pump_h
+        st.metric("قدرة الطلمبة", f"{hp} حصان")
+        st.metric("إنتاج المياه اليومي", f"{water} م³")
 
-# 3. المختبر الهندسي (حساب الكوابل - تم إصلاح الخطأ هنا)
+# --- القسم الثالث: المختبر الهندسي ---
 with tabs[2]:
-    st.subheader("📐 مختبر أنداندي (حساب الفقد)")
-    st.write("احسب قطر السلك المناسب لمنع 'سخونة الأسلاك' وفقد الطاقة:")
+    st.subheader("📐 حاسبة الأسلاك (Cable Sizing)")
+    st.write("احسب قطر السلك المناسب لمنع الفقد:")
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        amp = st.number_input("التيار (أمبير):", 1, 400, 30)
+    with cc2:
+        dist = st.number_input("المسافة (متر):", 1, 200, 20)
     
-    col_c1, col_c2 = st.columns(2)
-    current = col_c1.number_input("التيار (Amps):", 1, 400, 30)
-    distance = col_c2.number_input("طول السلك (متر):", 1, 200, 20)
-    
-    # حساب مساحة المقطع النحاسي (Voltage Drop < 3%)
-    wire_area = (distance * current * 0.04) / 1.5 
-    st.warning(f"📍 قطر السلك النحاسي المقترح: **{max(6, math.ceil(wire_area))} mm²**")
+    wire_size = (dist * amp * 0.04) / 1.5
+    st.warning(f"القطر المقترح للسلك: {max(6, math.ceil(wire_size))} mm²")
 
-# 4. الصيانة والضمان (جيمني الذكي)
+# --- القسم الرابع: الصيانة والذكاء الاصطناعي ---
 with tabs[3]:
-    
+    st.subheader("🛡️ مركز الدعم الذكي")
+    u_query = st.text_input("اسأل م. محمد عن أي عطل هنا:")
+    if st.button("تحليل الاستشارة 🤖"):
+        if model:
+            with st.spinner("جاري التحليل..."):
+                res = model.generate_content(f"أنت خبير طاقة شمسية سوداني، حلل: {u_query}")
+                st.info(res.text)
+        else:
+            st.error("يرجى التأكد من إعداد مفتاح API في السكرت (Secrets).")
+
+# 5. التذييل (Footer)
+st.write("---")
+st.markdown("### 🏢 من أعمال م. محمد (أنداندي)")
+st.image("https://images.unsplash.com/photo-1509391366360-fe5bb626582f?w=800", caption="مشروع ري متكامل")
+
+wa_url = f"https://wa.me/249116284817?text=استشارة من منصة أنداندي"
+st.markdown(f"""
+    <div style="text-align: center; padding: 20px;">
+        <a href="{wa_url}" target="_blank">
+            <button style="background-color: #25d366; color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; cursor: pointer;">
+                💬 تواصل مع م. محمد عبد الهادي
+            </button>
+        </a>
+        <p style="color: #888; margin-top: 20px;">© 2026 ANDANDI - جميع الحقوق محفوظة</p>
+    </div>
+""", unsafe_allow_html=True)
