@@ -1,125 +1,117 @@
 import streamlit as st
 import google.generativeai as genai
 import math
+import pandas as pd
 
 # إعدادات الصفحة
-st.set_page_config(page_title="مستشارك الشمسي", page_icon="☀️", layout="wide")
+st.set_page_config(page_title="أنداندي للطاقة الشمسية", page_icon="☀️", layout="wide")
 
-# الربط الذكي مع جيمني
+# الربط مع جيمني (تجاوز خطأ 404)
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     try:
         available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
         model_name = next((m for m in available_models if 'flash' in m), available_models[0])
         model = genai.GenerativeModel(model_name)
-    except:
-        model = None
+    except: model = None
 
-# --- تنسيق العنوان بدون الاسم ---
+# --- تصميم الهوية البصرية (أنداندي فوق) ---
 st.markdown("""
-    <div style="background-color: #0e1117; padding: 15px; border-radius: 10px; border-bottom: 3px solid #f39c12; text-align: center;">
-        <h2 style="color: #f39c12; margin: 0;">☀️ المصمم الشمسي الآلي</h2>
+    <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); padding: 30px; border-radius: 15px; border-top: 5px solid #f39c12; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+        <h1 style="color: #f39c12; margin: 0; font-size: 3em; font-family: 'Trebuchet MS'; letter-spacing: 2px;">ANDANDI</h1>
+        <p style="color: #ecf0f1; font-size: 1.2em; margin-top: 5px; opacity: 0.9;">للحلول والأنظمة الشمسية المتكاملة</p>
     </div>
     """, unsafe_allow_html=True)
 
 # --- قاعدة بيانات الأجهزة ---
 appliance_cats = {
-    "❄️ التبريد": {"مكيف فريون": 1200, "مكيف نسمة": 250, "ثلاجة": 300, "ديب فريزر": 200},
-    "🍳 المطبخ": {"غلاية ماء": 2000, "ميكروويف": 1200, "سخان كهربائي": 1500},
-    "🏠 المنزل": {"شاشة LED": 120, "مروحة سقف": 80, "مكواة": 1500, "إنترنت": 30},
-    "💦 أخرى": {"مضخة 1 حصان": 750, "إضاءة البيت": 150}
+    "❄️ التبريد والتكييف": {"مكيف فريون": 1200, "مكيف نسمة": 250, "ثلاجة": 300, "ديب فريزر": 200},
+    "🍳 أجهزة المطبخ": {"غلاية ماء": 2000, "ميكروويف": 1200, "سخان كهربائي": 1500, "خلاط": 400},
+    "🏠 أحمال المنزل": {"شاشة LED": 120, "مروحة سقف": 80, "مكواة": 1500, "إنترنت": 30},
+    "💦 مضخات وإنارة": {"مضخة 1 حصان": 750, "مضخة 0.5 حصان": 375, "إضاءة البيت": 150}
 }
 
 st.write("\n")
-st.markdown("##### 🛠️ اختر الأجهزة والكمية")
+col_input, col_chart = st.columns([1, 1], gap="large")
 
-selected_items = {}
-
-# عرض الأجهزة في تبويبات
-tabs = st.tabs(list(appliance_cats.keys()) + ["➕ جهاز مخصص"])
-
-for i, cat in enumerate(appliance_cats.keys()):
-    with tabs[i]:
-        cols = st.columns(2)
-        for j, (name, watt) in enumerate(appliance_cats[cat].items()):
-            c_idx = j % 2
-            with cols[c_idx]:
-                if st.checkbox(f"{name} ({watt}W)", key=f"chk_{name}"):
-                    count = st.number_input(f"العدد", 1, 20, 1, key=f"num_{name}")
+with col_input:
+    st.markdown("#### 🛠️ 1. اختيار الأجهزة")
+    selected_items = {}
+    tabs = st.tabs(list(appliance_cats.keys()))
+    for i, cat in enumerate(appliance_cats.keys()):
+        with tabs[i]:
+            for name, watt in appliance_cats[cat].items():
+                c1, c2 = st.columns([2, 1])
+                if c1.checkbox(f"{name} ({watt}W)", key=f"c_{name}"):
+                    count = c2.number_input(f"العدد", 1, 20, 1, key=f"v_{name}")
                     selected_items[name] = watt * count
 
-with tabs[-1]:
-    c_name = st.text_input("اسم الجهاز:")
-    c_watt = st.number_input("الواط:", 0, 5000, 0)
-    c_num = st.number_input("الكمية:", 1, 20, 1)
-    if c_name and c_watt > 0:
-        selected_items[c_name] = c_watt * c_num
-
-# --- عرض الإجمالي المنسق ---
 total_load = sum(selected_items.values())
+
+with col_chart:
+    if total_load > 0:
+        st.markdown("#### 📊 تحليل استهلاك النظام")
+        df = pd.DataFrame(list(selected_items.items()), columns=['الجهاز', 'الواط'])
+        st.bar_chart(df.set_index('الجهاز'), color="#f39c12")
+    else:
+        st.info("قم باختيار الأجهزة لعرض الرسم البياني للحمل.")
+
+# --- الحسابات الهندسية ---
 if total_load > 0:
+    st.write("---")
+    st.markdown("#### ⚙️ 2. مدخلات التصميم الفني")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        night_h = st.slider("🌙 ساعات التشغيل ليلاً:", 1, 15, 6)
+    with c2:
+        v_sys = st.radio("⚡ جهد النظام (V):", [12, 24, 48], index=2, horizontal=True)
+    with c3:
+        margin = st.select_slider("🛡️ معامل الأمان:", options=[1.1, 1.2, 1.3], value=1.2, format_func=lambda x: f"{int((x-1)*100)}%")
+
+    # معادلات م. أنداندي (محمد)
+    inv = math.ceil((total_load * margin) / 500) * 500
+    bat = math.ceil((total_load * night_h) / (v_sys * 0.5 * 0.85))
+    pan = math.ceil(((total_load * 8) + (total_load * night_h)) / (550 * 5 * 0.65))
+
     st.markdown(f"""
-        <div style="background-color: #2c3e50; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #f39c12;">
-            <span style="color: #f39c12; font-size: 1.2em; font-weight: bold;">إجمالي الحمل: {total_load} واط</span>
+        <div style="background-color: #2c3e50; padding: 12px; border-radius: 10px; border: 1px solid #f39c12; text-align: center; margin-bottom: 20px;">
+            <h3 style="color: #f39c12; margin: 0;">الحمل المطلوب: {total_load} واط</h3>
         </div>
     """, unsafe_allow_html=True)
 
+    res1, res2, res3 = st.columns(3)
+    res1.metric("م. إنفيرتر (W)", f"{inv} W")
+    res2.metric("م. بطاريات (Ah)", f"{bat} Ah")
+    res3.metric("م. ألواح (550W)", f"{pan}")
+
+    # --- التوصيات الفنية ---
     st.write("---")
-    col_v1, col_v2 = st.columns(2)
-    with col_v1:
-        night_h = st.slider("🌙 ساعات التشغيل ليلاً:", 1, 15, 6)
-    with col_v2:
-        v_sys = st.radio("⚡ فولتية النظام:", [12, 24, 48], index=2, horizontal=True)
+    st.markdown("#### 💡 3. توصيات م. أنداندي للتركيب")
+    exp1, exp2 = st.columns(2)
+    with exp1:
+        with st.expander("📍 توجيه المصفوفة"):
+            st.write("- **الاتجاه:** جنوب جغرافي.")
+            st.write("- **الميل:** 15-20 درجة.")
+    with exp2:
+        with st.expander("🔌 الكوابل والحماية"):
+            st.write("- استخدم كابلات نحاسية معتمدة.")
+            st.write("- تأكد من وجود قواطع DC للحماية.")
 
-    # الحسابات الهندسية
-    inv = math.ceil((total_load * 1.25) / 500) * 500
-    bat = math.ceil((total_load * night_h) / (v_sys * 0.5 * 0.8))
-    pan = math.ceil(((total_load * 8) + (total_load * night_h)) / (550 * 5 * 0.65))
-
-    st.markdown("#### 📊 التقرير الفني المبدئي")
-    r1, r2, r3 = st.columns(3)
-    r1.metric("الإنفيرتر", f"{inv} W")
-    r2.metric("البطاريات", f"{bat} Ah")
-    r3.metric("الألواح", f"{pan}")
-
-# --- أيقونة الواتساب والاسم في الأسفل ---
+# --- التذييل والواتساب ---
 st.write("\n\n")
-st.write("---")
-
-whatsapp_url = f"https://wa.me/249116284817?text=طلب استشارة: حمل {total_load} واط"
-
-# كود HTML للأيقونة الجانبية والاسم المنسق
+wa_url = f"https://wa.me/249116284817?text=طلب استشارة فنية من م. أنداندي: حمل {total_load} واط"
 st.markdown(f"""
     <style>
-    .floating-whatsapp {{
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #25d366;
-        color: white;
-        border-radius: 50px;
-        text-align: center;
-        padding: 10px 15px;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-        z-index: 100;
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: bold;
-    }}
-    .footer-name {{
-        text-align: center;
-        color: #7f8c8d;
-        font-size: 0.9em;
-        margin-top: 20px;
+    .wa-float {{
+        position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: white;
+        border-radius: 50px; text-align: center; padding: 12px 18px; box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
+        z-index: 1000; text-decoration: none; font-weight: bold; font-size: 14px;
     }}
     </style>
-    
-    <a href="{whatsapp_url}" class="floating-whatsapp" target="_blank">
-        💬 واتساب الدعم
-    </a>
-    
-    <div class="footer-name">
-        تطوير وتصميم المهندس: <b>محمد عبد الهادي عيسى مختار</b> <br>
-        © 2026 جميع الحقوق محفوظة
+    <a href="{wa_url}" class="wa-float" target="_blank">💬 تواصل مع م. أنداندي</a>
+    <div style="text-align: center; color: #95a5a6; padding: 20px; font-size: 0.9em; border-top: 1px solid #34495e;">
+        تصميم وإشراف: <b>م. أنداندي محمد عبد الهادي عيسى</b> <br>
+        متخصص في هندسة القوى الكهربائية © 2026
     </div>
 """, unsafe_allow_html=True)
+        
