@@ -41,9 +41,9 @@ system_type = st.selectbox(
 
 st.write("---")
 
-# ==================== 🏠 القسم السكني المطور ====================
+# ==================== 🏠 القسم السكني (شامل البطاريات والاكسسوارات) ====================
 if "🏠" in system_type:
-    st.subheader("📋 تحديد أحمال المنزل والاكسسوارات")
+    st.subheader("📋 تحديد أحمال المنزل")
     
     appliance_cats = {
         "❄️ التبريد": {"مكيف فريون 1.5 حصان": 1500, "مكيف نسمة": 250, "ثلاجة": 300, "ديب فريزر": 250},
@@ -64,83 +64,47 @@ if "🏠" in system_type:
     total_load = sum(selected_items.values())
     
     if total_load > 0:
-        st.markdown(f"### 📊 ملخص الأحمال: {total_load} واط")
+        st.markdown(f"### 📊 نتائج التصميم الفني")
         
-        # حسابات المنظومة الأساسية
-        v_sys = st.selectbox("جهد النظام (V):", [12, 24, 48], index=2)
+        # مدخلات إضافية للحساب
+        c1, c2 = st.columns(2)
+        v_sys = c1.selectbox("جهد النظام (V):", [12, 24, 48], index=2)
+        night_hours = c2.slider("ساعات التشغيل الليلي (على البطارية):", 1, 15, 6)
+        
+        # 1. حساب الإنفيرتر والألواح
         inv_kw = math.ceil((total_load * 1.25) / 1000)
         pan_count = math.ceil((total_load * 2.2) / 550)
         
-        # --- قسم الاكسسوارات الذكي ---
-        st.markdown("### 🛒 الملحقات والاكسسوارات الفنية (تلقائي)")
-        with st.container():
-            st.markdown("<div style='background-color: #1e1e1e; padding: 20px; border-radius: 10px; border: 1px solid #f39c12;'>", unsafe_allow_html=True)
+        # 2. حساب البطاريات (بافتراض بطاريات 200Ah)
+        # المعادلة: (الحمل * الساعات) / (الجهد * 0.6 كفاءة) / 200Ah
+        required_ah = (total_load * night_hours) / (v_sys * 0.6)
+        bat_count = math.ceil(required_ah / 200)
+        # التأكد من أن عدد البطاريات يناسب الجهد (مثلاً نظام 48V يحتاج مضاعفات 4)
+        if v_sys == 48: bat_count = math.ceil(bat_count / 4) * 4
+        elif v_sys == 24: bat_count = math.ceil(bat_count / 2) * 2
+
+        # عرض النتائج الأساسية
+        res1, res2, res3 = st.columns(3)
+        res1.metric("قدرة الإنفيرتر", f"{inv_kw} kW")
+        res2.metric("عدد الألواح (550W)", f"{pan_count} لوح")
+        res3.metric("عدد البطاريات (200Ah)", f"{bat_count} بطارية")
+
+        # --- قسم الاكسسوارات والملحقات ---
+        st.markdown("### 🛒 الملحقات والاكسسوارات الفنية")
+        st.info("هذه الملحقات ضرورية لضمان سلامة المنظومة وكفاءتها:")
+        
+        # حسابات الأسلاك والبريكرات
+        system_amps = (total_load / v_sys) * 1.25
+        if system_amps <= 30: wire = "6mm"
+        elif system_amps <= 60: wire = "10mm"
+        else: wire = "16mm أو 25mm"
+        
+        acc_col1, acc_col2 = st.columns(2)
+        with acc_col1:
+            st.write("**🔌 الأسلاك والكوابل:**")
+            st.write(f"- كوابل البطاريات: {wire} نحاس مخصص")
+            st.write(f"- كوابل الألواح: 6mm DC (حسب المسافة)")
+            st.write(f"- كوابل الأحمال: 4mm AC")
+        with acc_col2:
+            st.write("**🛡️ الحماية والتركيب:**")
             
-            # حساب التيار (Amps) لتحديد الأسلاك والبريكرات
-            system_amps = (total_load / v_sys) * 1.25
-            
-            # تحديد مقاس السلك
-            if system_amps <= 30: wire_size = 6
-            elif system_amps <= 50: wire_size = 10
-            elif system_amps <= 80: wire_size = 16
-            else: wire_size = 25
-            
-            # تحديد البريكرات
-            breaker_ac = math.ceil((total_load / 220) * 1.5 / 10) * 10
-            breaker_dc = math.ceil(system_amps / 10) * 10
-
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.write("**🔌 الكوابل والأسلاك:**")
-                st.info(f"أسلاك البطاريات: {wire_size}mm مخصص")
-                st.info(f"أسلاك الألواح: 6mm DC")
-            with c2:
-                st.write("**🛡️ قواطع الحماية:**")
-                st.info(f"قاطع DC (البطاريات): {breaker_dc}A")
-                st.info(f"قاطع AC (الخروج): {breaker_ac}A")
-            with c3:
-                st.write("**🏗️ الهيكل والملحقات:**")
-                st.info(f"قواعد تثبيت: لعدد {pan_count} لوح")
-                st.info(f"تابلوه توزيع حماية متكامل")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-# ==================== 🌾 القسم الزراعي المطور ====================
-elif "🌾" in system_type:
-    st.subheader("🚜 تفاصيل منظومة الري الزراعي")
-    acres = st.number_input("المساحة (فدان):", 1, 1000, 5)
-    depth = st.number_input("العمق (متر):", 10, 500, 60)
-    
-    hp = math.ceil((acres * 1.1) + (depth * 0.06))
-    panels = math.ceil((hp * 746 * 1.6) / 550)
-    
-    st.success(f"✅ التصميم: طلمبة {hp} حصان | {panels} لوح")
-    
-    st.markdown("#### 📦 تفاصيل الملحقات الزراعية:")
-    col_z1, col_z2 = st.columns(2)
-    with col_z1:
-        st.info(f"- جهاز VFD بقدرة {hp} حصان (ماركة INVT أو ما يعادلها)")
-        st.info(f"- كابل بحري (Submersible Cable) مقاس 3x10mm بطول {depth + 20} متر")
-    with col_z2:
-        st.info("- هيكل تثبيت حديد مجلفن مضاد للصدأ")
-        st.info("- حساسات مستوى الماء (Sensors) ومفتاح تشغيل طوارئ")
-
-# ==================== 🏭 القسم الصناعي المطور ====================
-elif "🏭" in system_type:
-    st.subheader("⚙️ منظومة الورش والمصانع")
-    ind_w = st.number_input("الحمل الصناعي (kW):", 1.0, 1000.0, 10.0)
-    st.error(f"تحتاج إنفيرتر صناعي 3-Phase بقدرة {math.ceil(ind_w * 2)} كيلوواط")
-    st.info("الملحقات: كوابل نحاس 25mm + لوحة ATS للتحويل الآلي + نظام تأريض (Earthing).")
-
-# --- التذييل والواتساب ---
-st.write("---")
-wa_url = f"https://wa.me/249116284817?text=طلب عرض سعر لمنظومة {system_type}"
-st.markdown(f"""
-    <div style="text-align: center; padding: 25px;">
-        <a href="{wa_url}" target="_blank">
-            <button style="background-color: #25d366; color: white; border: none; padding: 18px 40px; border-radius: 35px; font-weight: bold; cursor: pointer; font-size: 1.2em;">
-                💬 اطلب عرض السعر النهائي من م. محمد
-            </button>
-        </a>
-        <p style="color: #7f8c8d; margin-top: 20px;">تصميم وبرمجة: م. محمد عبد الهادي عيسى | <b>ANDANDI 2026</b></p>
-    </div>
-""", unsafe_allow_html=True)
